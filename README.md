@@ -40,3 +40,6 @@ YouTube changes its page code from time to time. The fix is usually a new class 
 - For banner or feed ads, add it to `extension/hide-ads.css`.
 
 Then reload the extension (Option A) or run `./build-safari-app.sh` again (Option B).
+
+## License
+[MIT](LICENSE). Free to use, change and share.
