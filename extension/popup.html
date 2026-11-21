@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>YouTube Ad Skipper</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header>
+    <img src="images/icon-48.png" alt="" width="28" height="28">
+    <h1>Ad Skipper</h1>
+  </header>
+
+  <label class="toggle">
+    <span>Skip YouTube ads</span>
+    <input type="checkbox" id="enabled" checked>
+    <span class="switch" aria-hidden="true"></span>
+  </label>
+
+  <div class="stat">
+    <span id="count">0</span>
+    <small>ads skipped</small>
+  </div>
+
+  <button id="reset" type="button">Reset counter</button>
+
+  <script src="popup.js"></script>
+</body>
+</html>
