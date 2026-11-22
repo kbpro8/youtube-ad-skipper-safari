@@ -1,4 +1,5 @@
-/* YouTube Ad Skipper — hides static ads. Disabled when <html> has .yt-ad-skipper-off */
+/* YouTube Ad Skipper — hides static ads.
+   Disabled when <html> has .yt-ad-skipper-off */
 
 html:not(.yt-ad-skipper-off) :is(
   #masthead-ad,
@@ -24,9 +25,36 @@ html:not(.yt-ad-skipper-off) :is(
   .ytp-ad-overlay-slot,
   .ytp-ad-image-overlay,
   .ytp-ad-message-container,
+  .ytp-ad-feedback-dialog-container,
+  .ytp-ad-confirm-dialog-container,
+  .ytp-suggested-action-badge,
   ad-slot-renderer,
   ytm-promoted-sparkles-web-renderer,
   ytm-companion-ad-renderer
 ) {
   display: none !important;
+}
+
+/* Shorts feed ads */
+html:not(.yt-ad-skipper-off) :is(
+  ytd-reel-video-renderer[is-ad],
+  ytm-reel-item-renderer[is-ad]
+) {
+  display: none !important;
+}
+
+/* "Ad blockers violate YouTube's Terms of Service" enforcement pop-up */
+html:not(.yt-ad-skipper-off) :is(
+  ytd-enforcement-message-view-model,
+  yt-playability-error-supported-renderers ytd-enforcement-message-view-model
+) {
+  display: none !important;
+}
+
+/* Hide the "Ad" label but keep player layout intact */
+html:not(.yt-ad-skipper-off) :is(
+  .ytp-ad-simple-ad-badge,
+  .ytp-ad-player-overlay-layout__ad-info-container
+) {
+  opacity: 0 !important;
 }
