@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YouTube Ad Skipper
 // @namespace    com.kbpro8.youtubeadskipper
-// @version      1.1.0
+// @version      1.1.1
 // @description  Automatically skips YouTube video ads and hides banner, feed and overlay ads. No Premium needed.
 // @author       kbpro8
 // @match        *://*.youtube.com/*
@@ -82,6 +82,9 @@
   let savedVolume = 1;
   let savedMuted = false;
   let savedRate = 1;
+  // True only while *we* changed playbackRate to rush through an ad.
+  // Never touch the rate otherwise — the user may have picked 1.5x / 2x.
+  let weChangedRate = false;
   let countedThisAd = false;
   let lastAdEnd = 0;
   let debug = false;
@@ -187,30 +190,37 @@
     if (!mutedByUs) {
       savedVolume = video.volume;
       savedMuted = video.muted;
-      savedRate = video.playbackRate;
       mutedByUs = true;
     }
     if (!video.muted) video.muted = true;
   }
 
+  // Put back the playback speed the user had, but only if we were the ones
+  // who changed it. A user-chosen 1.5x / 2x is left completely alone.
+  function restoreRate(video) {
+    if (!weChangedRate || !video) return;
+    try {
+      video.playbackRate = savedRate > 0 ? savedRate : 1;
+    } catch (_) {
+      /* ignore */
+    }
+    weChangedRate = false;
+  }
+
+  function restoreAudio(video) {
+    if (!mutedByUs || !video) return;
+    try {
+      video.muted = savedMuted;
+      if (!savedMuted) video.volume = savedVolume;
+    } catch (_) {
+      /* ignore */
+    }
+    mutedByUs = false;
+  }
+
   function restoreVideo(video) {
-    if (!video) return;
-    if (video.playbackRate > 1) {
-      try {
-        video.playbackRate = savedRate > 0 ? savedRate : 1;
-      } catch (_) {
-        /* ignore */
-      }
-    }
-    if (mutedByUs) {
-      try {
-        video.muted = savedMuted;
-        if (!savedMuted) video.volume = savedVolume;
-      } catch (_) {
-        /* ignore */
-      }
-      mutedByUs = false;
-    }
+    restoreRate(video);
+    restoreAudio(video);
   }
 
   function clickSkipButtons() {
@@ -264,13 +274,18 @@
   }
 
   function speedUp(video) {
-    if (video.playbackRate < FAST_RATE) {
-      try {
-        video.playbackRate = FAST_RATE;
-        log("fast-forwarding at", FAST_RATE, "x");
-      } catch (_) {
-        /* ignore */
-      }
+    if (video.playbackRate >= FAST_RATE) return;
+    // Remember the speed to go back to, but never overwrite it while we are
+    // already the ones controlling the rate (that would save 16x as "ours").
+    if (!weChangedRate) {
+      savedRate = video.playbackRate;
+      weChangedRate = true;
+    }
+    try {
+      video.playbackRate = FAST_RATE;
+      log("fast-forwarding at", FAST_RATE, "x");
+    } catch (_) {
+      /* ignore */
     }
   }
 
@@ -368,13 +383,11 @@
       log("ad finished");
       restoreVideo(video);
       resumeIfPaused(video);
-    } else if (!adOn && video && video.playbackRate > 1 && Date.now() - lastAdEnd > 1500) {
-      // Safety net: never leave the real video sped up.
-      try {
-        video.playbackRate = 1;
-      } catch (_) {
-        /* ignore */
-      }
+    } else if (!adOn && video && weChangedRate) {
+      // Safety net: we sped an ad up but never saw the ad-end transition
+      // (for example YouTube swapped the player). Only undo our own change —
+      // a playback speed chosen by the user is never touched.
+      restoreRate(video);
     }
   }
 
